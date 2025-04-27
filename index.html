@@ -1,0 +1,269 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS System</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 18px;
+        }
+        h1 {
+            font-size: 2.5em;
+        }
+        h2 {
+            font-size: 2em;
+        }
+        .app-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            margin-bottom: 50px;
+        }
+        .menu-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .menu-item {
+            border: 1px solid #ccc;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .menu-item:hover {
+            background: #f0f0f0;
+        }
+        .item-price {
+            font-size: 1.1em;
+        }
+        .order-section {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .order-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+            font-size: 1.1em;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .quantity-btn {
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .total-section {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: right;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        .action-btn {
+            padding: 12px 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        .action-btn:hover {
+            background: #45a049;
+        }
+        .logo-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1>SANTA ROSITAS</h1>
+        
+        <div class="menu-section" id="menu">
+            <!-- Menu items will be populated by JavaScript -->
+        </div>
+        
+        <div class="order-section">
+            <h2>Gracias por su compra</h2>
+            <div id="current-order">
+                <!-- Order items will be populated by JavaScript -->
+            </div>
+            <div class="total-section">
+                Total: <span id="total-amount">0</span> Bs
+            </div>
+        </div>
+        
+        <button class="action-btn" id="new-order-btn">Nuevo Pedido</button>
+        
+        <img src="https://i.postimg.cc/xCKtDqFC/qr-srb-maribel-16-mayo-2025.jpg" alt="Santa Rositas Logo" class="logo-image">
+    </div>
+
+    <!-- Add audio elements (hidden) -->
+    <audio id="clickSound" src="https://assets.mixkit.co/sfx/preview/mixkit-modern-click-box-check-1120.mp3" preload="auto"></audio>
+    <audio id="addSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" preload="auto"></audio>
+
+    <script>
+        const menuItem = [
+            {name: "Pierna", price: 13},
+            {name: "Contra o Ala", price:14},
+            {name: "Pecho Broasted", price:16},
+            {name: "Cuarto Pollo", price:26},
+            {name: "Triple Pollo", price: 36}, 
+            {name: "Burger Simple", price:15}, 
+            {name: "Burger Papas", price: 17}, 
+            {name:"Huevona", price: 20},
+            {name:"Double Burger", price:26},
+            {name:"Doble Huevona", price:30},
+            {name:"Pipocas", price: 23}, 
+            {name:"Pechuga Plancha", price: 23},
+            {name: "Tallarín", price:15},
+            {name: "Papa", price:8},            
+            {name:"Arroz", price:6}, 
+            {name:"Vaso o Mini", price:3},
+            {name:"1/2 Jarra", price:8},
+            {name:"Jarra", price:15},
+            {name:"Soda 2L", price:15},          
+            {name:"Popular", price:6}
+        ];
+
+        let currentorder = [];
+
+        // Get audio elements
+        const clickSound = document.getElementById('clickSound');
+        const addSound = document.getElementById('addSound');
+
+        function playSound(sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log("Audio play failed:", e));
+        }
+
+        function renderMenu() {
+            const menuContainer = document.getElementById('menu');
+            menuContainer.innerHTML = '';
+            
+            menuItem.forEach(item => {
+                const menuItemElement = document.createElement('div');
+                menuItemElement.className = 'menu-item';
+                menuItemElement.innerHTML = `
+                    <div>${item.name}</div>
+                    <div class="item-price">${item.price} Bs</div>
+                `;
+                menuItemElement.addEventListener('click', () => {
+                    playSound(addSound);
+                    addToOrder(item);
+                });
+                menuContainer.appendChild(menuItemElement);
+            });
+        }
+
+        function addToOrder(menuItem) {
+            playSound(addSound);
+            const existingItem = currentorder.find(item => item.name === menuItem.name);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                currentorder.push({
+                    ...menuItem,
+                    quantity: 1
+                });
+            }
+            
+            renderOrder();
+        }
+
+        function renderOrder() {
+            const orderContainer = document.getElementById('current-order');
+            orderContainer.innerHTML = '';
+            
+            currentorder.forEach((item, index) => {
+                const orderItemElement = document.createElement('div');
+                orderItemElement.className = 'order-item';
+                orderItemElement.innerHTML = `
+                    <div>${item.name}</div>
+                    <div class="quantity-control">
+                        <div class="quantity-btn minus-btn">-</div>
+                        <div class="quantity">${item.quantity}</div>
+                        <div class="quantity-btn plus-btn">+</div>
+                    </div>
+                    <div>${item.price} Bs</div>
+                    <div>${item.price * item.quantity} Bs</div>
+                    <div class="quantity-btn remove-btn">X</div>
+                `;
+                
+                orderItemElement.querySelector('.minus-btn').addEventListener('click', () => updateQuantity(index, -1));
+                orderItemElement.querySelector('.plus-btn').addEventListener('click', () => updateQuantity(index, 1));
+                orderItemElement.querySelector('.remove-btn').addEventListener('click', () => removeItem(index));
+                
+                orderContainer.appendChild(orderItemElement);
+            });
+            
+            updateTotal();
+        }
+
+        function updateQuantity(index, change) {
+            playSound(clickSound);
+            currentorder[index].quantity += change;
+            
+            if (currentorder[index].quantity <= 0) {
+                currentorder.splice(index, 1);
+            }
+            
+            renderOrder();
+        }
+
+        function removeItem(index) {
+            playSound(clickSound);
+            currentorder.splice(index, 1);
+            renderOrder();
+        }
+
+        function updateTotal() {
+            const total = currentorder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('total-amount').textContent = total;
+        }
+
+        function newOrder() {
+            playSound(clickSound);
+            currentorder = [];
+            renderOrder();
+        }
+
+        document.getElementById('new-order-btn').addEventListener('click', newOrder);
+
+        // Initialize the app
+        renderMenu();
+    </script>
+</body>
+</html>
