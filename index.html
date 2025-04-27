@@ -254,11 +254,20 @@
             document.getElementById('total-amount').textContent = total;
         }
 
-        function newOrder() {
-            playSound(clickSound);
-            currentorder = [];
-            renderOrder();
-        }
+async function newOrder() {
+    const transaction = {
+        items: currentorder,
+        total: currentorder.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    };
+    
+    await fetch('https://script.google.com/macros/s/AKfycbzsacVMppDQZHtfp-KD0fLnn6rlUmPGBgV5Ie4ihenX4D2lx3mm73JnW6rkuk17QJOe7w/exec', {
+        method: 'POST',
+        body: JSON.stringify(transaction)
+    });
+    
+    currentorder = [];
+    renderOrder();
+}
 
         document.getElementById('new-order-btn').addEventListener('click', newOrder);
 
